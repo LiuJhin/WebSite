@@ -39,7 +39,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" suppressHydrationWarning={true}>
       <div className="relative min-h-screen overflow-hidden">
         <div className="pointer-events-none absolute inset-0 editorial-noise" />
         <div
