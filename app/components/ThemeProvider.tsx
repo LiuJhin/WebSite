@@ -126,10 +126,14 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("midnight");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme && themeConfigs[savedTheme]) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setThemeState(savedTheme);
     }
   }, []);
@@ -151,9 +155,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       <div
         className="min-h-screen transition-all duration-700 ease-in-out"
         style={{
-          backgroundColor: themeConfigs[theme].bg,
-          color: themeConfigs[theme].text,
-          backgroundImage: themeConfigs[theme].backgroundGradient,
+          backgroundColor: mounted
+            ? themeConfigs[theme].bg
+            : themeConfigs.midnight.bg,
+          color: mounted
+            ? themeConfigs[theme].text
+            : themeConfigs.midnight.text,
+          backgroundImage: mounted
+            ? themeConfigs[theme].backgroundGradient
+            : themeConfigs.midnight.backgroundGradient,
         }}
       >
         <div className="fixed inset-0 pointer-events-none opacity-[0.015] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />

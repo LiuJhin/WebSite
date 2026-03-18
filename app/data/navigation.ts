@@ -1,1 +1,8 @@
-export const navItems = ["Home", "Archive", "About", "Contact", "Projects"];
+export const navItems = [
+  "Home",
+  "Archive",
+  "ThreejsLab",
+  "About",
+  "Contact",
+  "Projects",
+];

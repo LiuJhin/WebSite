@@ -6,5 +6,6 @@ export { HomeSection } from "./sections/HomeSection";
 export { AboutSection } from "./sections/AboutSection";
 export { ProjectSection } from "./sections/ProjectSection";
 export { ContactSection } from "./sections/ContactSection";
+export { ThreejsLab } from "./sections/ThreejsLab";
 export { ThemeProvider, useTheme } from "./ThemeProvider";
 export { default as ThemeSwitcher } from "./ThemeSwitcher";

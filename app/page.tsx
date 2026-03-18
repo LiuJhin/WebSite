@@ -11,6 +11,7 @@ import {
   AboutSection,
   ProjectSection,
   ContactSection,
+  ThreejsLab,
 } from "./components";
 import { navItems } from "./data/navigation";
 import { posts } from "./data/posts";
@@ -39,7 +40,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen" suppressHydrationWarning={true}>
+    <div className="min-h-screen">
       <div className="relative min-h-screen overflow-hidden">
         <div className="pointer-events-none absolute inset-0 editorial-noise" />
         <div
@@ -102,6 +103,7 @@ export default function Home() {
                   </div>
                 </section>
               ) : null}
+              {activeSection === "ThreejsLab" ? <ThreejsLab /> : null}
               {activeSection === "About" ? <AboutSection /> : null}
               {activeSection === "Projects" ? <ProjectSection /> : null}
               {activeSection === "Contact" ? <ContactSection /> : null}
