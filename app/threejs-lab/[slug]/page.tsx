@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useRef, useMemo, useState, useEffect } from "react";
+import React, { Suspense, useRef, useState, useEffect, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   ScrollControls,
@@ -9,247 +9,258 @@ import {
   useGLTF,
   Environment,
   MeshReflectorMaterial,
-  Html,
   ContactShadows,
 } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import {
+  EffectComposer,
+  Bloom,
+  Vignette,
+  ChromaticAberration,
+} from "@react-three/postprocessing";
 import * as THREE from "three";
 import { easing } from "maath";
 
-// ─── 1. 文字配置 (与运镜区间严格对应) ───
-const TEXT_STEPS = [
+// ─── 配置数据（保持不变） ───
+const SCENES = [
   {
-    range: [0, 0.2],
-    title: "AERO_X EVOLUTION",
-    subtitle: "DESIGNED FOR THE NEXT GENERATION",
-    position: "left-center",
+    center: 0.0,
+    cam: [8, 2, 12],
+    title: "SUZILONG",
+    sub: "01 / GENESIS",
+    align: "left-center",
   },
   {
-    range: [0.2, 0.4],
-    title: "21' PERFORMANCE",
-    subtitle: "FORGED LIGHTWEIGHT ALLOY WHEELS",
-    position: "right-bottom",
+    center: 0.25,
+    cam: [-7, 0.5, 7],
+    title: "PRECISION",
+    sub: "02 / STRUCTURE",
+    align: "right-bottom",
   },
   {
-    range: [0.4, 0.6],
-    title: "AERO DYNAMICS",
-    subtitle: "0.21 CD ULTRA-LOW DRAG COEFFICIENT",
-    position: "left-top",
+    center: 0.5,
+    cam: [0, 6, -10],
+    title: "VELOCITY",
+    sub: "03 / FLOW",
+    align: "left-top",
   },
   {
-    range: [0.6, 0.8],
-    title: "CARBON CHASSIS",
-    subtitle: "REINFORCED STRUCTURAL INTEGRITY",
-    position: "right-center",
+    center: 0.75,
+    cam: [6, 1.2, 4],
+    title: "CARBON",
+    sub: "04 / INTEGRITY",
+    align: "right-center",
   },
   {
-    range: [0.8, 1.0],
-    title: "FUTURE ARCH",
-    subtitle: "TERMINATE SESSION / DRIVE NOW",
-    position: "center-center",
+    center: 1.0,
+    cam: [0, 0.5, 12],
+    title: "VOID",
+    sub: "05 / BEYOND",
+    align: "center-center",
   },
 ];
 
-// ─── 2. 车辆模型 ───
-function BMWModel() {
-  const { scene } = useGLTF("/models/bmwModel/scene.gltf");
-  const scroll = useScroll();
-  const carGroup = useRef<THREE.Group>(null);
-
-  useMemo(() => {
-    scene.traverse((obj) => {
-      if ((obj as THREE.Mesh).isMesh) {
-        const mesh = obj as THREE.Mesh;
-        mesh.material = new THREE.MeshStandardMaterial({
-          color: "#050505",
-          metalness: 1,
-          roughness: 0.05,
-          envMapIntensity: 2,
-        });
-      }
-    });
-  }, [scene]);
-
-  useFrame((state, delta) => {
-    const offset = scroll.offset;
-    if (carGroup.current) {
-      easing.dampE(
-        carGroup.current.rotation,
-        [Math.sin(offset * Math.PI) * 0.08, offset * Math.PI * 2, 0],
-        0.4,
-        delta,
-      );
-    }
-  });
-
+// ─── 高级滚动进度条（无变化） ───
+function ProgressBar({ offset }: { offset: number }) {
   return (
-    <group ref={carGroup}>
-      <primitive object={scene} scale={0.45} position={[0, -0.6, 0]} />
-    </group>
-  );
-}
-
-// ─── 3. 文字交互层 (修正版：直接使用 Html 组件) ───
-function OverlayText() {
-  const scroll = useScroll();
-  const groupRef = useRef<HTMLDivElement>(null);
-
-  useFrame(() => {
-    if (!groupRef.current) return;
-    const sections = groupRef.current.querySelectorAll(".text-section");
-    const r = scroll.offset;
-
-    sections.forEach((el, i) => {
-      const [start, end] = TEXT_STEPS[i].range;
-      const htmlEl = el as HTMLElement;
-
-      // 计算透明度逻辑
-      let opacity = 0;
-      const margin = 0.08;
-      if (r >= start && r <= end) {
-        if (r < start + margin) opacity = (r - start) / margin;
-        else if (r > end - margin) opacity = (end - r) / margin;
-        else opacity = 1;
-      }
-
-      htmlEl.style.opacity = opacity.toString();
-      htmlEl.style.transform = `translateY(${(1 - opacity) * 30}px)`;
-      htmlEl.style.display = opacity <= 0 ? "none" : "flex";
-    });
-  });
-
-  const getPosClass = (pos: string) => {
-    switch (pos) {
-      case "left-center":
-        return "items-start justify-center pl-24";
-      case "right-bottom":
-        return "items-end justify-end p-24 pb-40";
-      case "left-top":
-        return "items-start justify-start p-24 pt-40";
-      case "right-center":
-        return "items-end justify-center pr-24";
-      case "center-center":
-        return "items-center justify-center";
-      default:
-        return "";
-    }
-  };
-
-  return (
-    <Html fullscreen zIndexRange={[100, 0]} style={{ pointerEvents: "none" }}>
-      <div ref={groupRef} className="w-full h-full relative">
-        {TEXT_STEPS.map((step, i) => (
+    <div className="fixed right-10 top-1/2 -translate-y-1/2 flex flex-col items-center gap-4 z-[150]">
+      <div className="text-[10px] text-emerald-500/50 rotate-90 mb-4 tracking-[0.3em]">
+        PROGRESS
+      </div>
+      <div className="h-64 w-[1px] bg-white/10 relative">
+        <div
+          className="absolute top-0 w-full bg-emerald-500 transition-all duration-100 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+          style={{ height: `${offset * 100}%` }}
+        />
+        {SCENES.map((_, i) => (
           <div
             key={i}
-            className={`text-section absolute inset-0 flex flex-col transition-opacity duration-300 pointer-events-none ${getPosClass(step.position)}`}
-            style={{ opacity: 0, display: "none" }}
-          >
-            <div className="space-y-2 border-l-2 border-emerald-500 pl-8 bg-black/10 backdrop-blur-[2px] py-4 pr-10">
-              <h2 className="text-[11px] tracking-[0.8em] text-emerald-400 uppercase font-bold">
-                {step.subtitle}
-              </h2>
-              <h1 className="text-7xl font-black italic tracking-tighter uppercase leading-none text-white">
-                {step.title}
-              </h1>
-            </div>
-          </div>
+            className="absolute w-1.5 h-1.5 border border-white/20 bg-black -left-[2px] rounded-full"
+            style={{ top: `${(i / (SCENES.length - 1)) * 100}%` }}
+          />
         ))}
       </div>
-    </Html>
-  );
-}
-
-// ─── 4. 运镜控制 ───
-function CinematicDirector() {
-  const scroll = useScroll();
-  const { camera } = useThree();
-  const targetPos = new THREE.Vector3();
-
-  useFrame((state, delta) => {
-    const r = scroll.offset;
-    if (r < 0.2) targetPos.set(8, 2, 12);
-    else if (r < 0.4) targetPos.set(-6, 0.4, 6);
-    else if (r < 0.6) targetPos.set(0, 6, -8);
-    else if (r < 0.8) targetPos.set(5, 1, 4);
-    else targetPos.set(0, 0.5, 10);
-
-    easing.damp3(camera.position, targetPos, 0.6, delta);
-    camera.lookAt(0, 0, 0);
-  });
-
-  return null;
-}
-
-// ─── 5. 主页面 ───
-export default function AutomotiveShowcase() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  return (
-    <div className="bg-black text-white font-mono h-screen w-screen overflow-hidden">
-      {mounted && (
-        <div className="fixed inset-0">
-          <Canvas shadows dpr={[1, 2]} camera={{ fov: 35 }}>
-            <ScrollControls pages={6} damping={0.4}>
-              <Suspense
-                fallback={
-                  <Html
-                    center
-                    className="text-emerald-500 tracking-widest uppercase"
-                  >
-                    Initializing...
-                  </Html>
-                }
-              >
-                <CinematicDirector />
-                <BMWModel />
-                <SceneDecoration />
-                <OverlayText />
-              </Suspense>
-            </ScrollControls>
-          </Canvas>
-        </div>
-      )}
-
-      {/* 底部 HUD */}
-      <div className="fixed bottom-10 left-10 right-10 flex justify-between pointer-events-none z-50 text-[10px] tracking-[0.5em] opacity-50 mix-blend-difference">
-        <div>SYSTEM_ACTIVE</div>
-        <div>SCROLL_TO_EXPLORE</div>
-        <div>SERIES_01X</div>
+      <div className="text-[10px] text-white/40 mt-4">
+        {(offset * 100).toFixed(0)}%
       </div>
     </div>
   );
 }
 
-function SceneDecoration() {
+// ─── 实时 UI 层（已优化：useMemo + 更柔和曲线 + willChange） ───
+function HighEndUI({ offset }: { offset: number }) {
+  const uiItems = useMemo(() => {
+    return SCENES.map((item, i) => {
+      const dist = Math.abs(offset - item.center);
+      const strength = Math.max(0, 1 - dist / 0.175); // 过渡范围 0.175（更自然）
+      const opacity = Math.pow(strength, 1.65); // 更丝滑的缓入缓出曲线
+      const yShift = (1 - opacity) * 55;
+
+      const alignClass = {
+        "left-center": "items-start justify-center pl-20",
+        "right-bottom": "items-end justify-end pr-20 pb-32 text-right",
+        "left-top": "items-start justify-start pl-20 pt-32",
+        "right-center": "items-end justify-center pr-20 text-right",
+        "center-center": "items-center justify-center text-center",
+      }[item.align];
+
+      return { item, i, opacity, yShift, alignClass };
+    });
+  }, [offset]);
+
   return (
-    <>
-      <color attach="background" args={["#000"]} />
-      <Environment preset="night" />
-      <gridHelper
-        args={[100, 50, "#111", "#050505"]}
-        position={[0, -0.61, 0]}
-      />
-      <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.1}>
-        {/* 这里原本包裹模型，为简化逻辑模型已独立 */}
-      </Float>
-      <ContactShadows opacity={0.6} scale={10} blur={2} far={1} color="#000" />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.62, 0]}>
-        <planeGeometry args={[100, 100]} />
-        <MeshReflectorMaterial
-          blur={[300, 100]}
-          resolution={1024}
-          mixBlur={1}
-          mixStrength={60}
-          color="#050505"
-          metalness={0.9}
-          mirror={1}
-        />
-      </mesh>
-      <EffectComposer disableNormalPass>
-        <Bloom luminanceThreshold={1.2} intensity={1.5} mipmapBlur />
-        <Vignette darkness={0.8} />
-      </EffectComposer>
-    </>
+    <div className="fixed inset-0 pointer-events-none z-[100] font-mono select-none">
+      {uiItems.map(({ item, i, opacity, yShift, alignClass }) => {
+        if (opacity < 0.005) return null;
+
+        return (
+          <div
+            key={i}
+            className={`absolute inset-0 flex flex-col ${alignClass}`}
+            style={{
+              opacity,
+              transform: `translateY(${yShift}px)`,
+              willChange: "opacity, transform", // GPU 加速关键
+            }}
+          >
+            <div className="max-w-5xl space-y-4">
+              <span className="text-emerald-500 text-xs tracking-[1.2em] uppercase block opacity-80">
+                {item.sub}
+              </span>
+              <h1 className="text-[15vw] font-black italic leading-[0.7] tracking-tighter text-white mix-blend-difference uppercase">
+                {item.title}
+              </h1>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── 运镜控制（核心优化：高斯权重 + 更长阻尼） ───
+function CinematicDirector({ setOffset }: { setOffset: (o: number) => void }) {
+  const scroll = useScroll();
+  const { camera } = useThree();
+  const blendedPos = useMemo(() => new THREE.Vector3(), []);
+  const tempVec = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame((state, delta) => {
+    const r = scroll.offset;
+    setOffset(r);
+
+    // 高斯权重（极致丝滑，消除跳段感）
+    const sigma = 0.175;
+    blendedPos.set(0, 0, 0);
+    let totalWeight = 0;
+
+    SCENES.forEach((s) => {
+      const distance = Math.abs(r - s.center);
+      const weight = Math.exp(-(distance * distance) / (2 * sigma * sigma));
+
+      tempVec.set(s.cam[0], s.cam[1], s.cam[2]);
+      blendedPos.add(tempVec.multiplyScalar(weight));
+      totalWeight += weight;
+    });
+
+    if (totalWeight > 0) blendedPos.divideScalar(totalWeight);
+
+    // 超长阻尼 + 轻微抬高注视点（电影级惯性）
+    easing.damp3(camera.position, blendedPos, 1.35, delta);
+    camera.lookAt(0, 0.12, 0); // 轻微抬高，构图更高级
+  });
+
+  return null;
+}
+
+// ─── 车辆模型（材质遍历优化） ───
+function BMWModel() {
+  const { scene } = useGLTF("/models/bmwModel/scene.gltf");
+  const scroll = useScroll();
+  const group = useRef<THREE.Group>(null);
+
+  // 材质只初始化一次
+  useMemo(() => {
+    scene.traverse((obj) => {
+      if ((obj as THREE.Mesh).isMesh) {
+        const mat = obj.material as THREE.MeshStandardMaterial;
+        if (mat) {
+          mat.color.set("#020202");
+          mat.metalness = 1;
+          mat.roughness = 0.08;
+          mat.envMapIntensity = 3;
+          mat.needsUpdate = true;
+        }
+      }
+    });
+  }, [scene]);
+
+  useFrame((state, delta) => {
+    if (group.current) {
+      const targetRotation = scroll.offset * Math.PI * 2;
+      easing.dampE(group.current.rotation, [0, targetRotation, 0], 0.6, delta);
+    }
+  });
+
+  return (
+    <group ref={group}>
+      <primitive object={scene} scale={0.45} position={[0, -0.6, 0]} />
+    </group>
+  );
+}
+
+// ─── 主页面（整合所有优化） ───
+export default function AutomotiveShowcase() {
+  const [offset, setOffset] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return <div className="bg-black w-screen h-screen" />;
+
+  return (
+    <main className="relative w-screen h-screen bg-black overflow-hidden font-mono">
+      <HighEndUI offset={offset} />
+      <ProgressBar offset={offset} />
+
+      <Canvas shadows dpr={[1, 2]} camera={{ fov: 32 }}>
+        {/* 关键：ScrollControls damping 略低于相机阻尼，形成自然惯性 */}
+        <ScrollControls pages={10} damping={0.45}>
+          <Suspense fallback={null}>
+            <CinematicDirector setOffset={setOffset} />
+            <Environment preset="night" />
+
+            <Float speed={1.2} rotationIntensity={0.1} floatIntensity={0.2}>
+              <BMWModel />
+            </Float>
+
+            <ContactShadows opacity={0.4} scale={12} blur={2.5} far={1.5} />
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.61, 0]}>
+              <planeGeometry args={[100, 100]} />
+              <MeshReflectorMaterial
+                blur={[400, 100]}
+                resolution={1024}
+                mixBlur={1}
+                mixStrength={80}
+                roughness={1}
+                color="#050505"
+                metalness={0.5}
+                mirror={1}
+              />
+            </mesh>
+
+            {/* Post-processing 降负优化 */}
+            <EffectComposer disableNormalPass multisampling={0}>
+              <Bloom luminanceThreshold={1.2} intensity={1.2} mipmapBlur />
+              <ChromaticAberration offset={new THREE.Vector2(0.0005, 0.0005)} />
+              <Vignette darkness={0.75} />
+            </EffectComposer>
+          </Suspense>
+        </ScrollControls>
+      </Canvas>
+
+      <div className="fixed top-10 left-10 pointer-events-none z-50 mix-blend-difference opacity-30 text-[9px] tracking-[0.5em] text-white uppercase">
+        AERO_X // DYNAMIC_SEQUENCE
+      </div>
+    </main>
   );
 }
