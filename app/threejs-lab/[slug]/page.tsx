@@ -61,8 +61,8 @@ const SCENES = [
 
 // ─── 2. 动态环境背景 ───
 function SceneBackground({ offset }: { offset: number }) {
-  const starsRef = useRef<THREE.Points>(null);
-  const gridRef = useRef<any>(null);
+  const starsRef = useRef<THREE.Points | null>(null);
+  const gridRef = useRef<THREE.Mesh | null>(null);
 
   useFrame((state, delta) => {
     if (starsRef.current) {
@@ -145,12 +145,23 @@ function BMWModel() {
 
   useEffect(() => {
     scene.traverse((obj) => {
-      if ((obj as THREE.Mesh).isMesh) {
-        const mat = obj.material as THREE.MeshStandardMaterial;
+      if (obj instanceof THREE.Mesh) {
+        const mesh = obj as THREE.Mesh;
+        const mat = mesh.material as THREE.MeshStandardMaterial;
         const isBody =
-          obj.name.toLowerCase().includes("body") ||
+          mesh.name.toLowerCase().includes("body") ||
           mat.name.toLowerCase().includes("paint");
-
+        //  以下可以让配置更满：
+        //           if (isBody) {
+        //   mat.color.set("#000000");
+        //   mat.metalness = 1.0;
+        //   mat.roughness = 0.01; // 极度光滑
+        //   // 核心：增加物理清漆层
+        //   mat.clearcoat = 1.0;
+        //   mat.clearcoatRoughness = 0.02;
+        //   // 强光反射
+        //   mat.envMapIntensity = 5.0;
+        // }
         if (isBody) {
           mat.color.set("#020202");
           mat.metalness = 1.0;
@@ -281,7 +292,11 @@ export default function AutomotiveShowcase() {
   const [offset, setOffset] = useState(0);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    const id = window.setTimeout(() => setMounted(true), 0);
+    return () => window.clearTimeout(id);
+  }, []);
+
   if (!mounted) return null;
 
   return (
@@ -301,6 +316,19 @@ export default function AutomotiveShowcase() {
 
       <HighEndUI offset={offset} />
 
+      {/* 配置拉满的参数：
+        <Canvas
+          shadows
+          dpr={[1, 2]} // 自动适配高分屏，最高到 2x
+          gl={{ 
+            antialias: true,            // 开启抗锯齿
+            stencil: false, 
+            depth: true,
+            powerPreference: "high-performance",
+            preserveDrawingBuffer: true // 提高渲染稳定性
+          }}
+        >
+        */}
       <Canvas
         shadows={false}
         dpr={1}
@@ -313,6 +341,7 @@ export default function AutomotiveShowcase() {
             <SceneBackground offset={offset} />
 
             <Environment preset="night" />
+            {/* 你可以换更加高清的环境图<Environment files="/_4k_studio.hdr" /> */}
 
             <BMWModel />
 
@@ -330,12 +359,42 @@ export default function AutomotiveShowcase() {
                 transparent
                 opacity={0.7}
               />
+              {/* 这里如果是要把画质拉到最满、可以试一下这里的配置
+              <MeshReflectorMaterial
+                blur={[400, 100]}      // 增加模糊采样范围
+                resolution={2048}      // 必须是 2048 或更高，确保倒影不糊
+                mixBlur={1}
+                mixStrength={80}       // 增加反射权重
+                roughness={1}
+                depthScale={1.2}       // 增加深度感
+                minDepthThreshold={0.4}
+                maxDepthThreshold={1.4}
+                color="#050505"
+                metalness={0.8}
+                mirror={1}             // 完美的镜面效果
+/>
+              */}
             </mesh>
 
-            <EffectComposer disableNormalPass multisampling={0}>
+            <EffectComposer enableNormalPass={false} multisampling={0}>
               <Bloom luminanceThreshold={1.3} intensity={0.9} />
               <Vignette darkness={0.8} />
             </EffectComposer>
+
+            {/* 配置拉满的参数：
+             */}
+            {/* <EffectComposer multisampling={8}>
+            <Bloom 
+              luminanceThreshold={1} 
+              mipmapBlur            // 开启高质量的 Mipmap 模糊（非常消耗性能，但极美）
+              intensity={1.5} 
+              radius={0.4} 
+            />
+            <ChromaticAberration 
+              offset={new THREE.Vector2(0.0015, 0.0015)} // 模拟真实镜头边缘色散
+            />
+            <Vignette eskil={false} offset={0.1} darkness={1.1} />
+          </EffectComposer> */}
           </Suspense>
         </ScrollControls>
       </Canvas>
