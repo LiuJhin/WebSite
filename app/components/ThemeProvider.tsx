@@ -1,8 +1,20 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
-export type Theme = "default" | "light" | "warm" | "cool" | "black" | "white";
+export type Theme =
+  | "midnight"
+  | "sand"
+  | "titanium"
+  | "moss"
+  | "black"
+  | "white";
 
 interface ThemeConfig {
   name: string;
@@ -19,88 +31,86 @@ interface ThemeConfig {
 }
 
 export const themeConfigs: Record<Theme, ThemeConfig> = {
-  default: {
-    name: "Default",
-    bg: "#2d1a12",
-    text: "#ffffff",
-    accent: "#f1e4d4",
-    border: "#ffffff",
-    borderStrong: "#ffffffcc",
-    shadow: "rgba(30,12,8,0.45)",
+  midnight: {
+    name: "Midnight",
+    bg: "#080c0c",
+    text: "#d1d5d5",
+    accent: "#2af598",
+    border: "#1a2222",
+    borderStrong: "#2d3a3a",
+    shadow: "rgba(0,0,0,0.8)",
     backgroundGradient:
-      "radial-gradient(1200px 600px at 80% 20%, rgba(140, 35, 24, 0.75), transparent 60%), radial-gradient(900px 700px at 10% 10%, rgba(255, 220, 170, 0.4), transparent 70%), linear-gradient(120deg, #c09a70 0%, #b07a4f 45%, #6b1b13 100%)",
-    textMuted: "#ffffff99",
-    textSecondary: "#ffffffcc",
-    bgSecondary: "#ffffff0a",
+      "radial-gradient(1200px 600px at 80% 20%, rgba(42, 245, 152, 0.05), transparent 70%), linear-gradient(180deg, #080c0c 0%, #0d1414 100%)",
+    textMuted: "#d1d5d566",
+    textSecondary: "#d1d5d5aa",
+    bgSecondary: "#ffffff05",
   },
-  light: {
-    name: "Light",
-    bg: "#f8f6f0",
-    text: "#2d1a12",
-    accent: "#8b7355",
-    border: "#2d1a12",
-    borderStrong: "#2d1a12cc",
-    shadow: "rgba(0,0,0,0.1)",
+  sand: {
+    name: "Sand",
+    bg: "#e5e0d8",
+    text: "#24211e",
+    accent: "#8c7851",
+    border: "#d1c9bc",
+    borderStrong: "#b5a894",
+    shadow: "rgba(0,0,0,0.05)",
     backgroundGradient:
-      "radial-gradient(1200px 600px at 80% 20%, rgba(139, 115, 85, 0.3), transparent 60%), radial-gradient(900px 700px at 10% 10%, rgba(248, 246, 240, 0.6), transparent 70%), linear-gradient(120deg, #e8e2d4 0%, #d4c4a8 45%, #a89070 100%)",
-    textMuted: "#2d1a1266",
-    textSecondary: "#2d1a12cc",
-    bgSecondary: "#2d1a120a",
+      "radial-gradient(1000px 600px at 10% 10%, rgba(255,255,255,0.5), transparent 50%), linear-gradient(120deg, #e5e0d8 0%, #dfd8cd 100%)",
+    textMuted: "#24211e80",
+    textSecondary: "#24211e99",
+    bgSecondary: "#00000005",
   },
-  warm: {
-    name: "Warm",
-    bg: "#3a1f0f",
-    text: "#fff8e1",
-    accent: "#ffb74d",
-    border: "#ffb74d",
-    borderStrong: "#ffb74dcc",
-    shadow: "rgba(255,183,77,0.2)",
+  titanium: {
+    name: "Titanium",
+    bg: "#161618",
+    text: "#ececed",
+    accent: "#ff3e00",
+    border: "#28282a",
+    borderStrong: "#3f3f42",
+    shadow: "rgba(0,0,0,0.5)",
     backgroundGradient:
-      "radial-gradient(1200px 600px at 80% 20%, rgba(255, 183, 77, 0.6), transparent 60%), radial-gradient(900px 700px at 10% 10%, rgba(255, 248, 225, 0.5), transparent 70%), linear-gradient(120deg, #ffab40 0%, #ff8a00 45%, #e65100 100%)",
-    textMuted: "#fff8e199",
-    textSecondary: "#fff8e1cc",
-    bgSecondary: "#fff8e10a",
+      "radial-gradient(800px 500px at 50% 0%, rgba(255,255,255,0.03), transparent 70%), linear-gradient(145deg, #161618 0%, #1c1c1f 100%)",
+    textMuted: "#ececed66",
+    textSecondary: "#ececedaa",
+    bgSecondary: "#ffffff08",
   },
-  cool: {
-    name: "Cool",
-    bg: "#1a1a2e",
-    text: "#e6e6fa",
-    accent: "#4fc3f7",
-    border: "#4fc3f7",
-    borderStrong: "#4fc3f7cc",
-    shadow: "rgba(79,195,247,0.2)",
+  moss: {
+    name: "Moss",
+    bg: "#0a0f0d",
+    text: "#c4c8ad",
+    accent: "#8e916d",
+    border: "#1d231f",
+    borderStrong: "#2a332d",
+    shadow: "rgba(0,0,0,0.6)",
     backgroundGradient:
-      "radial-gradient(1200px 600px at 80% 20%, rgba(79, 195, 247, 0.5), transparent 60%), radial-gradient(900px 700px at 10% 10%, rgba(230, 230, 250, 0.4), transparent 70%), linear-gradient(120deg, #29b6f6 0%, #0277bd 45%, #01579b 100%)",
-    textMuted: "#e6e6fa99",
-    textSecondary: "#e6e6facc",
-    bgSecondary: "#e6e6fa0a",
+      "radial-gradient(1200px 700px at 0% 0%, rgba(142, 145, 109, 0.08), transparent 50%), linear-gradient(180deg, #0a0f0d 0%, #121a16 100%)",
+    textMuted: "#c4c8ad66",
+    textSecondary: "#c4c8adaa",
+    bgSecondary: "#ffffff03",
   },
   black: {
     name: "Black",
     bg: "#000000",
     text: "#ffffff",
-    accent: "#999999",
-    border: "#444444",
-    borderStrong: "#888888",
-    shadow: "rgba(0,0,0,0.7)",
-    backgroundGradient:
-      "radial-gradient(1200px 600px at 80% 20%, rgba(255, 255, 255, 0.1), transparent 60%), radial-gradient(900px 700px at 10% 10%, rgba(255, 255, 255, 0.05), transparent 70%), linear-gradient(120deg, #000000 0%, #0d0d0d 45%, #1a1a1a 100%)",
-    textMuted: "#ffffff99",
-    textSecondary: "#ffffffcc",
-    bgSecondary: "#ffffff0a",
+    accent: "#ffffff",
+    border: "#222222",
+    borderStrong: "#444444",
+    shadow: "rgba(0,0,0,1)",
+    backgroundGradient: "none",
+    textMuted: "#ffffff66",
+    textSecondary: "#ffffff99",
+    bgSecondary: "#ffffff05",
   },
   white: {
     name: "White",
     bg: "#ffffff",
     text: "#121212",
-    accent: "#444444",
-    border: "#cccccc",
-    borderStrong: "#666666",
-    shadow: "rgba(0,0,0,0.08)",
-    backgroundGradient:
-      "radial-gradient(1200px 600px at 80% 20%, rgba(0, 0, 0, 0.05), transparent 60%), radial-gradient(900px 700px at 10% 10%, rgba(0, 0, 0, 0.03), transparent 70%), linear-gradient(120deg, #ffffff 0%, #f0f0f0 45%, #e0e0e0 100%)",
-    textMuted: "#12121280",
-    textSecondary: "#121212cc",
+    accent: "#121212",
+    border: "#eeeeee",
+    borderStrong: "#dddddd",
+    shadow: "rgba(0,0,0,0.05)",
+    backgroundGradient: "none",
+    textMuted: "#12121266",
+    textSecondary: "#12121299",
     bgSecondary: "#00000005",
   },
 };
@@ -115,13 +125,14 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("theme") as Theme;
-      return savedTheme && themeConfigs[savedTheme] ? savedTheme : "default";
+  const [theme, setThemeState] = useState<Theme>("midnight");
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as Theme;
+    if (savedTheme && themeConfigs[savedTheme]) {
+      setThemeState(savedTheme);
     }
-    return "default";
-  });
+  }, []);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
@@ -138,14 +149,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   return (
     <ThemeContext.Provider value={value}>
       <div
-        className="min-h-screen transition-colors duration-500 ease-out"
+        className="min-h-screen transition-all duration-700 ease-in-out"
         style={{
           backgroundColor: themeConfigs[theme].bg,
           color: themeConfigs[theme].text,
           backgroundImage: themeConfigs[theme].backgroundGradient,
-          transition: "background 0.5s ease, color 0.5s ease",
         }}
       >
+        <div className="fixed inset-0 pointer-events-none opacity-[0.015] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
         {children}
       </div>
     </ThemeContext.Provider>
